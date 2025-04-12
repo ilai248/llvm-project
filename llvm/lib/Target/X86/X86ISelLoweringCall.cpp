@@ -2327,9 +2327,16 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs);
     assert((Subtarget.hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
-    RegsToPass.push_back(std::make_pair(Register(X86::AL),
-                                        DAG.getConstant(NumXMMRegs, dl,
-                                                        MVT::i8)));
+    RegsToPass.push_back(std::make_pair(Register(X86::AL), DAG.getConstant(NumXMMRegs, dl, MVT::i8)));
+
+    // Mov regs to 0.
+    static const MCPhysReg GPR64ArgRegs[] = {
+      X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8 , X86::R9
+    };
+    unsigned NumGPRRegs = CCInfo.getFirstUnallocated(GPR64ArgRegs);
+    for (; NumGPRRegs < 6; NumGPRRegs++) {
+      RegsToPass.push_back(std::make_pair(Register(GPR64ArgRegs[NumGPRRegs]), DAG.getConstant(0, dl, MVT::i64)));
+    }
   }
 
   if (isVarArg && IsMustTail) {

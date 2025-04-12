@@ -35601,7 +35601,7 @@ X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
   // }
   // sizeof(va_list) = 24
   // alignment(va_list) = 8
-
+  
   unsigned TotalNumIntRegs = 6;
   unsigned TotalNumXMMRegs = 8;
   bool UseGPOffset = (ArgMode == 1);

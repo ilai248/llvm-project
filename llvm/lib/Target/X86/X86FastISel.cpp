@@ -3644,8 +3644,7 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   CLI.ResultReg = ResultReg;
   CLI.NumResultRegs = RVLocs.size();
   CLI.Call = MIB;
-  // BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::INT3)); // Emits `int3` instruction
-
+  
   return true;
 }
 
