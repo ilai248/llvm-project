@@ -3502,6 +3502,15 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
            && "SSE registers cannot be used when SSE is disabled");
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::MOV8ri),
             X86::AL).addImm(NumXMMRegs);
+
+    // Mov regs to 0.
+    static const MCPhysReg GPR64ArgRegs[] = {
+      X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8 , X86::R9
+    };
+    unsigned NumGPRRegs = CCInfo.getFirstUnallocated(GPR64ArgRegs);
+    for (; NumGPRRegs < 6; NumGPRRegs++) {
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::MOV64ri), GPR64ArgRegs[NumGPRRegs]).addImm(0);
+    }
   }
 
   // Materialize callee address in a register. FIXME: GV address can be
@@ -3635,6 +3644,7 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   CLI.ResultReg = ResultReg;
   CLI.NumResultRegs = RVLocs.size();
   CLI.Call = MIB;
+  // BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::INT3)); // Emits `int3` instruction
 
   return true;
 }
