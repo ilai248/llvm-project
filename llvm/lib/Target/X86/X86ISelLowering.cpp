@@ -25690,13 +25690,16 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // __va_list_tag:
+  //   overflow_arg_area_size
   //   gp_offset         (0 - 6 * 8)
   //   fp_offset         (48 - 48 + 8 * 16)
   //   overflow_arg_area (point to parameters coming in memory).
   //   reg_save_area
   SmallVector<SDValue, 8> MemOps;
-  SDValue FIN = Op.getOperand(1);
+  SDValue FIN = Op.getOperand(1); // Currently ignores the first value (overflow_arg_area_size);
+
   // Store gp_offset
+  FIN = DAG.getMemBasePlusOffset(FIN, TypeSize::getFixed(/*8*/ 4), DL);
   SDValue Store = DAG.getStore(
       Op.getOperand(0), DL,
       DAG.getConstant(FuncInfo->getVarArgsGPOffset(), DL, MVT::i32), FIN,

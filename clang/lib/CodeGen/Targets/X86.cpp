@@ -3004,7 +3004,7 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
 static Address EmitX86_64VAArgFromMemory(CodeGenFunction &CGF,
                                          Address VAListAddr, QualType Ty) {
   Address overflow_arg_area_p =
-      CGF.Builder.CreateStructGEP(VAListAddr, 2, "overflow_arg_area_p");
+      CGF.Builder.CreateStructGEP(VAListAddr, 3, "overflow_arg_area_p");
   llvm::Value *overflow_arg_area =
     CGF.Builder.CreateLoad(overflow_arg_area_p, "overflow_arg_area");
 
@@ -3042,6 +3042,7 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
                                 QualType Ty, AggValueSlot Slot) const {
   // Assume that va_list type is correct; should be pointer to LLVM type:
   // struct {
+  //   i64 overflow_reg_area_size
   //   i32 gp_offset;
   //   i32 fp_offset;
   //   i8* overflow_arg_area;
@@ -3078,15 +3079,16 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
   llvm::Value *InRegs = nullptr;
   Address gp_offset_p = Address::invalid(), fp_offset_p = Address::invalid();
   llvm::Value *gp_offset = nullptr, *fp_offset = nullptr;
+  
   if (neededInt) {
-    gp_offset_p = CGF.Builder.CreateStructGEP(VAListAddr, 0, "gp_offset_p");
+    gp_offset_p = CGF.Builder.CreateStructGEP(VAListAddr, 1, "gp_offset_p");
     gp_offset = CGF.Builder.CreateLoad(gp_offset_p, "gp_offset");
     InRegs = llvm::ConstantInt::get(CGF.Int32Ty, 48 - neededInt * 8);
     InRegs = CGF.Builder.CreateICmpULE(gp_offset, InRegs, "fits_in_gp");
   }
 
   if (neededSSE) {
-    fp_offset_p = CGF.Builder.CreateStructGEP(VAListAddr, 1, "fp_offset_p");
+    fp_offset_p = CGF.Builder.CreateStructGEP(VAListAddr, 2, "fp_offset_p");
     fp_offset = CGF.Builder.CreateLoad(fp_offset_p, "fp_offset");
     llvm::Value *FitsInFP =
       llvm::ConstantInt::get(CGF.Int32Ty, 176 - neededSSE * 16);
@@ -3115,7 +3117,9 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
   // loads than necessary. Can we clean this up?
   llvm::Type *LTy = CGF.ConvertTypeForMem(Ty);
   llvm::Value *RegSaveArea = CGF.Builder.CreateLoad(
-      CGF.Builder.CreateStructGEP(VAListAddr, 3), "reg_save_area");
+      CGF.Builder.CreateStructGEP(VAListAddr, 4), "reg_save_area");
+  
+  printf("\n\n\n\n****************************** BEFORE **********************************\n\n\n\n");
 
   Address RegAddr = Address::invalid();
   if (neededInt && neededSSE) {
@@ -3262,6 +3266,8 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
   CGF.EmitBlock(ContBlock);
   Address ResAddr = emitMergePHI(CGF, RegAddr, InRegBlock, MemAddr, InMemBlock,
                                  "vaarg.addr");
+  
+  printf("\n\n\n\n****************************** AFTER **********************************\n\n\n\n");
   return CGF.EmitLoadOfAnyValue(CGF.MakeAddrLValue(ResAddr, Ty), Slot);
 }
 

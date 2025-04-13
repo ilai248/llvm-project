@@ -5942,7 +5942,7 @@ struct VarArgAMD64Helper : public VarArgHelperBase {
 
   VarArgAMD64Helper(Function &F, MemorySanitizer &MS,
                     MemorySanitizerVisitor &MSV)
-      : VarArgHelperBase(F, MS, MSV, /*VAListTagSize=*/24) {
+      : VarArgHelperBase(F, MS, MSV, /*VAListTagSize=*/28) { // TODO: Maybe also change at different locations. also, this should be 24+8=32.
     AMD64FpEndOffset = AMD64FpEndOffsetSSE;
     for (const auto &Attr : F.getAttributes().getFnAttrs()) {
       if (Attr.isStringAttribute() &&

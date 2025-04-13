@@ -9713,25 +9713,29 @@ CreateX86_64ABIBuiltinVaListDecl(const ASTContext *Context) {
   VaListTagDecl = Context->buildImplicitRecord("__va_list_tag");
   VaListTagDecl->startDefinition();
 
-  const size_t NumFields = 4;
+  const size_t NumFields = 5;
   QualType FieldTypes[NumFields];
   const char *FieldNames[NumFields];
-
+  
   //   unsigned gp_offset;
   FieldTypes[0] = Context->UnsignedIntTy;
-  FieldNames[0] = "gp_offset";
+  FieldNames[0] = "overflow_arg_area_size";
+
+  //   unsigned gp_offset;
+  FieldTypes[1] = Context->UnsignedIntTy;
+  FieldNames[1] = "gp_offset";
 
   //   unsigned fp_offset;
-  FieldTypes[1] = Context->UnsignedIntTy;
-  FieldNames[1] = "fp_offset";
+  FieldTypes[2] = Context->UnsignedIntTy;
+  FieldNames[2] = "fp_offset";
 
   //   void* overflow_arg_area;
-  FieldTypes[2] = Context->getPointerType(Context->VoidTy);
-  FieldNames[2] = "overflow_arg_area";
+  FieldTypes[3] = Context->getPointerType(Context->VoidTy);
+  FieldNames[3] = "overflow_arg_area";
 
   //   void* reg_save_area;
-  FieldTypes[3] = Context->getPointerType(Context->VoidTy);
-  FieldNames[3] = "reg_save_area";
+  FieldTypes[4] = Context->getPointerType(Context->VoidTy);
+  FieldNames[4] = "reg_save_area";
 
   // Create fields
   for (unsigned i = 0; i < NumFields; ++i) {
