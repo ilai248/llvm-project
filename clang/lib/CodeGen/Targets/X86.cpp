@@ -3119,8 +3119,6 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
   llvm::Value *RegSaveArea = CGF.Builder.CreateLoad(
       CGF.Builder.CreateStructGEP(VAListAddr, 4), "reg_save_area");
   
-  printf("\n\n\n\n****************************** BEFORE **********************************\n\n\n\n");
-
   Address RegAddr = Address::invalid();
   if (neededInt && neededSSE) {
     // FIXME: Cleanup.
@@ -3267,7 +3265,6 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
   Address ResAddr = emitMergePHI(CGF, RegAddr, InRegBlock, MemAddr, InMemBlock,
                                  "vaarg.addr");
   
-  printf("\n\n\n\n****************************** AFTER **********************************\n\n\n\n");
   return CGF.EmitLoadOfAnyValue(CGF.MakeAddrLValue(ResAddr, Ty), Slot);
 }
 

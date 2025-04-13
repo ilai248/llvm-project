@@ -5,9 +5,8 @@ void test_fn(const char* s, ...) {
     va_list vl, vl2;
     va_start(vl, s);
     va_copy(vl2, vl);
-    //  FAILS:
-    //  vfprintf(stdout, s, vl);
-    //  vfprintf(stdout, s, vl2);
+    vfprintf(stdout, s, vl);
+    vfprintf(stdout, s, vl2);
     va_end(vl);
 }
 

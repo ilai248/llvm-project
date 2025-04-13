@@ -9718,7 +9718,7 @@ CreateX86_64ABIBuiltinVaListDecl(const ASTContext *Context) {
   const char *FieldNames[NumFields];
   
   //   unsigned gp_offset;
-  FieldTypes[0] = Context->UnsignedIntTy;
+  FieldTypes[0] = Context->UnsignedLongTy;
   FieldNames[0] = "overflow_arg_area_size";
 
   //   unsigned gp_offset;

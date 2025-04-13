@@ -25699,7 +25699,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   SDValue FIN = Op.getOperand(1); // Currently ignores the first value (overflow_arg_area_size);
 
   // Store gp_offset
-  FIN = DAG.getMemBasePlusOffset(FIN, TypeSize::getFixed(/*8*/ 4), DL);
+  FIN = DAG.getMemBasePlusOffset(FIN, TypeSize::getFixed(8), DL);
   SDValue Store = DAG.getStore(
       Op.getOperand(0), DL,
       DAG.getConstant(FuncInfo->getVarArgsGPOffset(), DL, MVT::i32), FIN,
@@ -25792,7 +25792,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
 
 static SDValue LowerVACOPY(SDValue Op, const X86Subtarget &Subtarget,
                            SelectionDAG &DAG) {
-  // X86-64 va_list is a struct { i32, i32, i8*, i8* }, except on Windows,
+  // X86-64 va_list is a struct { i64, i32, i32, i8*, i8* }, except on Windows,
   // where a va_list is still an i8*.
   assert(Subtarget.is64Bit() && "This code only handles 64-bit va_copy!");
   if (Subtarget.isCallingConvWin64(
@@ -25809,7 +25809,7 @@ static SDValue LowerVACOPY(SDValue Op, const X86Subtarget &Subtarget,
 
   return DAG.getMemcpy(
       Chain, DL, DstPtr, SrcPtr,
-      DAG.getIntPtrConstant(Subtarget.isTarget64BitLP64() ? 24 : 16, DL),
+      DAG.getIntPtrConstant(Subtarget.isTarget64BitLP64() ? 32 : 16, DL),
       Align(Subtarget.isTarget64BitLP64() ? 8 : 4), /*isVolatile*/ false, false,
       /*CI=*/nullptr, std::nullopt, MachinePointerInfo(DstSV),
       MachinePointerInfo(SrcSV));
