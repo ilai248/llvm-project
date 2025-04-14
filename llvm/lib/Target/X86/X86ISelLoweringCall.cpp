@@ -2327,9 +2327,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs);
     assert((Subtarget.hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
-
-    unsigned NumOverflowArgs = NumBytes / 8;
-    RegsToPass.push_back(std::make_pair(Register(X86::RAX), DAG.getConstant(256 * NumOverflowArgs + NumXMMRegs, dl, MVT::i64)));
+    
+    RegsToPass.push_back(std::make_pair(Register(X86::RAX), DAG.getConstant(256*NumBytes + NumXMMRegs, dl, MVT::i64)));
   }
 
   // Mov regs to 0.

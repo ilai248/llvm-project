@@ -3501,9 +3501,8 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     assert((Subtarget->hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
     
-    unsigned NumOverflowArgs = NumBytes / 8;
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::MOV64ri),
-            X86::RAX).addImm(256 * NumOverflowArgs + NumXMMRegs);
+            X86::RAX).addImm(256*NumBytes + NumXMMRegs);
 
     // Mov regs to 0.
     static const MCPhysReg GPR64ArgRegs[] = {
