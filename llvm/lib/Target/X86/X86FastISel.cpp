@@ -3500,8 +3500,10 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs);
     assert((Subtarget->hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::MOV8ri),
-            X86::AL).addImm(NumXMMRegs);
+    
+    unsigned NumOverflowArgs = NumBytes / 8;
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::MOV64ri),
+            X86::RAX).addImm(256 * NumOverflowArgs + NumXMMRegs);
 
     // Mov regs to 0.
     static const MCPhysReg GPR64ArgRegs[] = {
