@@ -25697,10 +25697,15 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   //   reg_save_area
   SmallVector<SDValue, 8> MemOps;
   SDValue FIN = Op.getOperand(1); // Currently ignores the first value (overflow_arg_area_size);
+  Register DstReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
+  SDValue Store = DAG.getStore(
+      Op.getOperand(0), DL, DAG.getCopyFromReg(DAG.getEntryNode(), DL, DstReg, MVT::i64 /* Op.getSimpleValueType() */) /* shouldn't work*/, FIN,
+      MachinePointerInfo(SV)); // TODO: What is this SV?
+  MemOps.push_back(Store);
 
   // Store gp_offset
   FIN = DAG.getMemBasePlusOffset(FIN, TypeSize::getFixed(8), DL);
-  SDValue Store = DAG.getStore(
+  Store = DAG.getStore(
       Op.getOperand(0), DL,
       DAG.getConstant(FuncInfo->getVarArgsGPOffset(), DL, MVT::i32), FIN,
       MachinePointerInfo(SV));
