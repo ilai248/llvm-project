@@ -103,6 +103,9 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// relocation models.
   Register GlobalBaseReg;
 
+  // SavedRAX - Save the num of bytes pushed when calling the function.
+  Register SavedRAX;
+  
   /// VarArgsFrameIndex - FrameIndex for start of varargs area.
   int VarArgsFrameIndex = 0;
   /// RegSaveFrameIndex - X86-64 vararg func register save area.
@@ -193,6 +196,9 @@ public:
       const override;
 
   void initializeBaseYamlFields(const yaml::X86MachineFunctionInfo &YamlMFI);
+
+  Register getSavedRAX() const { return SavedRAX; }
+  void setSavedRAX(Register savedRAX) { SavedRAX = savedRAX; }
 
   bool getForceFramePointer() const { return ForceFramePointer;}
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }

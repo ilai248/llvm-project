@@ -3501,8 +3501,10 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     assert((Subtarget->hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
     
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::MOV64ri),
-            X86::RAX).addImm(256*NumBytes + NumXMMRegs);
+    // Set X86::RAX and save it.
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::MOV64ri), X86::RAX).addImm(256*NumBytes + NumXMMRegs);
+    Register SavedRAX = FuncInfo.MF->addLiveIn(X86::RAX, &X86::GR64RegClass);
+    FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->setSavedRAX(SavedRAX);
 
     // Mov regs to 0.
     static const MCPhysReg GPR64ArgRegs[] = {

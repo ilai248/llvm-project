@@ -2327,7 +2327,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs);
     assert((Subtarget.hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
-    
+
     RegsToPass.push_back(std::make_pair(Register(X86::RAX), DAG.getConstant(256*NumBytes + NumXMMRegs, dl, MVT::i64)));
   }
 
@@ -2625,8 +2625,11 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return LowerCallResult(Chain, InGlue, CallConv, isVarArg, Ins, dl, DAG,
-                         InVals, RegMask);
+  SDValue res = LowerCallResult(Chain, InGlue, CallConv, isVarArg, Ins, dl, DAG, InVals, RegMask);
+  // Save RAX as a virtual register in the X86FuncInfo.
+  Register SavedRAX = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
+  X86Info->setSavedRAX(SavedRAX);
+  return res;
 }
 
 //===----------------------------------------------------------------------===//
