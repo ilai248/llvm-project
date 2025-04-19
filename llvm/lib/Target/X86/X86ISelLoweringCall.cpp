@@ -2626,9 +2626,12 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Handle result values, copying them out of physregs into vregs that we
   // return.
   SDValue res = LowerCallResult(Chain, InGlue, CallConv, isVarArg, Ins, dl, DAG, InVals, RegMask);
-  // Save RAX as a virtual register in the X86FuncInfo.
-  Register SavedRAX = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
-  X86Info->setSavedRAX(SavedRAX);
+  
+  // // Save RAX as a virtual register in the X86FuncInfo.
+  // printf("\n\n\n\nBEFORE\n\n\n\n"); // TODO: Here
+  // Register SavedRAX = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
+  // X86Info->setSavedRAX(SavedRAX);
+  // printf("\n\n\n\nAFTER\n\n\n\n");
   return res;
 }
 

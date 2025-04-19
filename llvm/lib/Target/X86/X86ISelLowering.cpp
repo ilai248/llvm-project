@@ -25697,15 +25697,16 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   //   reg_save_area
   SmallVector<SDValue, 8> MemOps;
   SDValue FIN = Op.getOperand(1); // Currently ignores the first value (overflow_arg_area_size);
-  FuncInfo->setSavedRAX(MF.addLiveIn(X86::RAX, &X86::GR64RegClass));
-  Register SavedRAX = FuncInfo->getSavedRAX(); // FuncInfo->getSavedRAX();
-  const SDValue& regVal = DAG.getCopyFromReg(DAG.getEntryNode(), DL, SavedRAX, MVT::i64);
-  SDValue Store = DAG.getStore(Op.getOperand(0), DL, regVal, FIN, MachinePointerInfo(SV)); // TODO: What is this SV?
-  MemOps.push_back(Store);
-
+  // FuncInfo->setSavedRAX(MF.addLiveIn(X86::RAX, &X86::GR64RegClass));
+  Register SavedRAX = MF.addLiveIn(FuncInfo->getSavedRAX(), &X86::GR64RegClass); // TODO: Should this get an MCRegister?
+  printf("\n\n\n\n********* VALID? [%d] **********\n\n\n\n", SavedRAX.isValid()); // TODO: Maybe check if register is live-in.
+  // const SDValue& regVal = DAG.getCopyFromReg(DAG.getEntryNode(), DL, SavedRAX, MVT::i64);
+  // SDValue Store = DAG.getStore(Op.getOperand(0), DL, regVal, FIN, MachinePointerInfo(SV)); // TODO: What is this SV?
+  // MemOps.push_back(Store);
+  
   // Store gp_offset
   FIN = DAG.getMemBasePlusOffset(FIN, TypeSize::getFixed(8), DL);
-  Store = DAG.getStore(
+  SDValue Store = DAG.getStore(
       Op.getOperand(0), DL,
       DAG.getConstant(FuncInfo->getVarArgsGPOffset(), DL, MVT::i32), FIN,
       MachinePointerInfo(SV));
