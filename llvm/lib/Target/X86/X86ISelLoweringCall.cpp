@@ -2329,7 +2329,6 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
            && "SSE registers cannot be used when SSE is disabled");
 
     RegsToPass.push_back(std::make_pair(Register(X86::RAX), DAG.getConstant(256*NumBytes + NumXMMRegs, dl, MVT::i64)));
-    X86Info->setNumBytes(256*NumBytes + NumXMMRegs);
   }
 
   // Mov regs to 0.

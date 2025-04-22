@@ -115,7 +115,6 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// VarArgsFPOffset - X86-64 vararg func fp reg offset.
   unsigned VarArgsFPOffset = 0;
   /// ArgumentStackSize - The number of bytes on stack consumed by the arguments
-  unsigned NumBytes = 0;
   /// being passed on the stack.
   unsigned ArgumentStackSize = 0;
   /// NumLocalDynamics - Number of local-dynamic TLS accesses.
@@ -252,9 +251,6 @@ public:
 
   unsigned getVarArgsFPOffset() const { return VarArgsFPOffset; }
   void setVarArgsFPOffset(unsigned Offset) { VarArgsFPOffset = Offset; }
-  
-  unsigned getNumBytes() const { return NumBytes; }
-  void setNumBytes(unsigned bytes) { NumBytes = bytes; }
 
   unsigned getArgumentStackSize() const { return ArgumentStackSize; }
   void setArgumentStackSize(unsigned size) { ArgumentStackSize = size; }
