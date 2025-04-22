@@ -25679,13 +25679,14 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
   SDLoc DL(Op);
+  SDValue Chain = Op.getOperand(0);
 
   if (!Subtarget.is64Bit() ||
       Subtarget.isCallingConvWin64(MF.getFunction().getCallingConv())) {
     // vastart just stores the address of the VarArgsFrameIndex slot into the
     // memory location argument.
     SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
-    return DAG.getStore(Op.getOperand(0), DL, FR, Op.getOperand(1),
+    return DAG.getStore(Chain, DL, FR, Op.getOperand(1),
                         MachinePointerInfo(SV));
   }
 
@@ -25698,21 +25699,32 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   SmallVector<SDValue, 8> MemOps;
   SDValue FIN = Op.getOperand(1); // Currently ignores the first value (overflow_arg_area_size);
   
-  Register SavedRAX = MF.addLiveIn(FuncInfo->getSavedRAX(), &X86::GR64RegClass); // TODO: Should this get an MCRegister?
-  printf("\n\n\n\n********* VALID? [%d] [id=%d (physical if max 1024 I think)] [if physical? %d] [virtual? %d] **********\n\n\n\n", SavedRAX.isValid(), SavedRAX.id(), SavedRAX.isPhysical(), SavedRAX.isVirtual()); // TODO: Maybe check if register is live-in.
+  SDLoc dl(Op);
+  X86MachineFunctionInfo* X86Info = MF.getInfo<X86MachineFunctionInfo>();
+  SDValue RegVal2 = DAG.getCopyFromReg(Chain, dl, X86::RAX, MVT::i64);
+  Register SavedRAX2 = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
+  Chain = DAG.getCopyToReg(Chain, dl, SavedRAX2, RegVal2);
+  X86Info->setSavedRAX(SavedRAX2);
+  
+  Register SavedRAX = MF.addLiveIn(FuncInfo->getSavedRAX(), &X86::GR64RegClass);
+  printf("\n\n\n\n********* VALID? [%d] [id=%lu (physical if max 1024 I think)] [if physical? %d] [virtual? %d] **********\n\n\n\n", SavedRAX.isValid(), SavedRAX.id(), SavedRAX.isPhysical(), SavedRAX.isVirtual()); // TODO: Maybe check if register is live-in.
+  printf("More reg info: %d %d\n", SavedRAX.virtRegIndex(), SavedRAX.isStack());
 
   const SDValue& regVal = DAG.getCopyFromReg(DAG.getEntryNode(), DL, SavedRAX, MVT::i64);
+  printf("Info about SDValue: %d\n", regVal.isUndef());
   regVal.dump();
+  printf("Node:\n");
+  regVal.getNode()->dump();
 
   printf("First Store\n");
-  SDValue Store = DAG.getStore(Op.getOperand(0), DL, regVal, FIN, MachinePointerInfo(SV));
+  SDValue Store = DAG.getStore(Chain, DL, regVal, FIN, MachinePointerInfo(SV));
   Store.dump();
   MemOps.push_back(Store);
   
   // Store gp_offset
   FIN = DAG.getMemBasePlusOffset(FIN, TypeSize::getFixed(8), DL);
   Store = DAG.getStore(
-      Op.getOperand(0), DL,
+      Chain, DL,
       DAG.getConstant(FuncInfo->getVarArgsGPOffset(), DL, MVT::i32), FIN,
       MachinePointerInfo(SV));
   printf("Second Store\n");
@@ -25722,7 +25734,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   // Store fp_offset
   FIN = DAG.getMemBasePlusOffset(FIN, TypeSize::getFixed(4), DL);
   Store = DAG.getStore(
-      Op.getOperand(0), DL,
+      Chain, DL,
       DAG.getConstant(FuncInfo->getVarArgsFPOffset(), DL, MVT::i32), FIN,
       MachinePointerInfo(SV, 4));
   MemOps.push_back(Store);
@@ -25731,7 +25743,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   FIN = DAG.getNode(ISD::ADD, DL, PtrVT, FIN, DAG.getIntPtrConstant(4, DL));
   SDValue OVFIN = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
   Store =
-      DAG.getStore(Op.getOperand(0), DL, OVFIN, FIN, MachinePointerInfo(SV, 8));
+      DAG.getStore(Chain, DL, OVFIN, FIN, MachinePointerInfo(SV, 8));
   MemOps.push_back(Store);
 
   // Store ptr to reg_save_area.
@@ -25739,9 +25751,10 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
       Subtarget.isTarget64BitLP64() ? 8 : 4, DL));
   SDValue RSFIN = DAG.getFrameIndex(FuncInfo->getRegSaveFrameIndex(), PtrVT);
   Store = DAG.getStore(
-      Op.getOperand(0), DL, RSFIN, FIN,
+      Chain, DL, RSFIN, FIN,
       MachinePointerInfo(SV, Subtarget.isTarget64BitLP64() ? 16 : 12));
   MemOps.push_back(Store);
+  printf("\nREACHED FUNCT END\n\n");
   return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps);
 }
 
