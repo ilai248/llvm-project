@@ -25697,24 +25697,10 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   //   reg_save_area
   SmallVector<SDValue, 8> MemOps;
   SDValue FIN = Op.getOperand(1); // Currently ignores the first value (overflow_arg_area_size);
-  
-  // Register SavedRAX = MF.addLiveIn(FuncInfo->getSavedRAX(), &X86::GR64RegClass); // TODO: Should this get an MCRegister?
-  // printf("\n\n\n\n********* VALID? [%d] [id=%d (physical if max 1024 I think)] [if physical? %d] [virtual? %d] **********\n\n\n\n", SavedRAX.isValid(), SavedRAX.id(), SavedRAX.isPhysical(), SavedRAX.isVirtual()); // TODO: Maybe check if register is live-in.
-  // const SDValue& regVal = DAG.getCopyFromReg(DAG.getEntryNode(), DL, SavedRAX, MVT::i64);
-  // SDValue Store = DAG.getStore(Op.getOperand(0), DL, regVal, FIN, MachinePointerInfo(SV)); // TODO: What is this SV?
-  // MemOps.push_back(Store);
-
-  // const SDValue& regVal = DAG.getCopyFromReg(DAG.getEntryNode(), DL, SavedRAX, MVT::i64);
-  // regVal.dump();
-
-  // printf("First Store\n");
-  // SDValue Store = DAG.getStore(Op.getOperand(0), DL, regVal, FIN, MachinePointerInfo());
-  // Store.dump();
-  // MemOps.push_back(Store);
 
   SDValue Store = DAG.getStore(
     Op.getOperand(0), DL,
-    DAG.getConstant(FuncInfo->getNumBytes(), DL, MVT::i64), FIN,
+    DAG.getConstant(FuncInfo->getArgumentStackSize(), DL, MVT::i64), FIN,
     MachinePointerInfo(SV));
   MemOps.push_back(Store);
   
@@ -25724,8 +25710,6 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
       Op.getOperand(0), DL,
       DAG.getConstant(FuncInfo->getVarArgsGPOffset(), DL, MVT::i32), FIN,
       MachinePointerInfo(SV));
-  printf("Second Store\n");
-  Store.dump();
   MemOps.push_back(Store);
 
   // Store fp_offset
