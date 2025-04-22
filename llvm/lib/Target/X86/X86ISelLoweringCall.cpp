@@ -2329,6 +2329,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
            && "SSE registers cannot be used when SSE is disabled");
 
     RegsToPass.push_back(std::make_pair(Register(X86::RAX), DAG.getConstant(256*NumBytes + NumXMMRegs, dl, MVT::i64)));
+    X86Info->setNumBytes(256*NumBytes + NumXMMRegs);
   }
 
   // Mov regs to 0.
@@ -2627,11 +2628,9 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // return.
   SDValue res = LowerCallResult(Chain, InGlue, CallConv, isVarArg, Ins, dl, DAG, InVals, RegMask);
   
-  // // Save RAX as a virtual register in the X86FuncInfo.
-  // printf("\n\n\n\nBEFORE\n\n\n\n"); // TODO: Here
-  // Register SavedRAX = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
-  // X86Info->setSavedRAX(SavedRAX);
-  // printf("\n\n\n\nAFTER\n\n\n\n");
+  // Save RAX as a virtual register in the X86FuncInfo.
+  Register DstReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
+  X86Info->setSavedRAX(DstReg);
   return res;
 }
 

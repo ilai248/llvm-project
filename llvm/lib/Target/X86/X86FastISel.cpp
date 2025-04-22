@@ -3511,9 +3511,14 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     // BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), ResultReg).addReg(DstReg, getKillRegState(true));
     // FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->setSavedRAX(ResultReg);
     
-    Register SavedRAX = MRI.createVirtualRegister(&X86::GR64RegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), SavedRAX).addReg(X86::RAX, getKillRegState(false /*true*/));
-    FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->setSavedRAX(SavedRAX);
+    // Register SavedRAX = MRI.createVirtualRegister(&X86::GR64RegClass);
+    // BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), SavedRAX).addReg(X86::RAX, getKillRegState(false /*true*/));
+    
+    Register DstReg = FuncInfo.MF->addLiveIn(X86::RAX, &X86::GR64RegClass);
+    Register ResultReg = createResultReg(&X86::GR64RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), ResultReg).addReg(DstReg, getKillRegState(true));
+    FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->setSavedRAX(ResultReg);
+    FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->setNumBytes(256*NumBytes + NumXMMRegs);
 
     // Mov regs to 0.
     static const MCPhysReg GPR64ArgRegs[] = {
