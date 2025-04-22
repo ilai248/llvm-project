@@ -2628,8 +2628,17 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDValue res = LowerCallResult(Chain, InGlue, CallConv, isVarArg, Ins, dl, DAG, InVals, RegMask);
   
   // Save RAX as a virtual register in the X86FuncInfo.
-  Register DstReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
-  X86Info->setSavedRAX(DstReg);
+  // Register DstReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
+  // printf("In X86 ISell Lowering %d %d\n", DstReg.isValid(), DstReg.isVirtual());
+  // X86Info->setSavedRAX(DstReg);
+  // TODO: here
+  
+  // X86MachineFunctionInfo* FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
+  SDValue RegVal = DAG.getCopyFromReg(Chain, dl, X86::RAX, MVT::i64);
+  Register SavedRAX = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
+  //Register SavedRAX = TheMachineFunction.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
+  Chain = DAG.getCopyToReg(Chain, dl, SavedRAX, RegVal);
+  X86Info->setSavedRAX(SavedRAX);
   return res;
 }
 

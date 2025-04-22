@@ -1235,6 +1235,7 @@ bool PeepholeOptimizer::optimizeCoalescableCopyImpl(Rewriter &&CpyRewriter) {
 /// \pre isCoalescableCopy(*MI) is true.
 /// \return True, when \p MI has been rewritten. False otherwise.
 bool PeepholeOptimizer::optimizeCoalescableCopy(MachineInstr &MI) {
+  MI.dump(); // TODO: Remove
   assert(isCoalescableCopy(MI) && "Invalid argument");
   assert(MI.getDesc().getNumDefs() == 1 &&
          "Coalescer can understand multiple defs?!");
