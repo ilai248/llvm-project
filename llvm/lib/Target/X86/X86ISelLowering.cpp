@@ -25699,27 +25699,43 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   SmallVector<SDValue, 8> MemOps;
   SDValue FIN = Op.getOperand(1); // Currently ignores the first value (overflow_arg_area_size);
   
-  SDLoc dl(Op);
-  X86MachineFunctionInfo* X86Info = MF.getInfo<X86MachineFunctionInfo>();
-  SDValue RegVal2 = DAG.getCopyFromReg(Chain, dl, X86::RAX, MVT::i64);
-  Register SavedRAX2 = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
-  Chain = DAG.getCopyToReg(Chain, dl, SavedRAX2, RegVal2);
-  X86Info->setSavedRAX(SavedRAX2);
+  // SDLoc dl(Op);
+  // X86MachineFunctionInfo* X86Info = MF.getInfo<X86MachineFunctionInfo>();
+  // Register MyReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);                      // Add RAX as a live in register.
+  // SDValue RegVal2 = DAG.getCopyFromReg(Chain, dl, MyReg, MVT::i64);
+  // Register SavedRAX2 = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
+  // Chain = DAG.getCopyToReg(Chain, dl, SavedRAX2, RegVal2);
+  // X86Info->setSavedRAX(SavedRAX2);
+
+  // DEBUG:
+  // printf("\n\n\n\n[2] ********* VALID? [%d] [id=%lu (physical if max 1024 I think)] [if physical? %d] [virtual? %d] **********\n\n\n\n", SavedRAX2.isValid(), SavedRAX2.id(), SavedRAX2.isPhysical(), SavedRAX2.isVirtual()); // TODO: Maybe check if register is live-in.
+  // printf("[2] More reg info: %d %d\n", SavedRAX2.virtRegIndex(), SavedRAX2.isStack());
+
+  // printf("[2] Info about SDValue: %d\n", RegVal2.isUndef());
+  // RegVal2.dump();
+  // printf("Node:\n");
+  // regVal.getNode()->dump();
+
+  // printf("First Store\n");
+  // Store.dump();
   
-  Register SavedRAX = MF.addLiveIn(FuncInfo->getSavedRAX(), &X86::GR64RegClass);
-  printf("\n\n\n\n********* VALID? [%d] [id=%lu (physical if max 1024 I think)] [if physical? %d] [virtual? %d] **********\n\n\n\n", SavedRAX.isValid(), SavedRAX.id(), SavedRAX.isPhysical(), SavedRAX.isVirtual()); // TODO: Maybe check if register is live-in.
-  printf("More reg info: %d %d\n", SavedRAX.virtRegIndex(), SavedRAX.isStack());
+  // printf("Second Store\n");
+  // Store.dump();
+  
+  // This live in is possibly causing problems cause it wasn't defined at start of funct. TODO: Check with + without.
+  // No need, it worked.
 
+  // Attempt to just use rax as live in without any virtual register stuff.
+  Register SavedRAX = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
   const SDValue& regVal = DAG.getCopyFromReg(DAG.getEntryNode(), DL, SavedRAX, MVT::i64);
-  printf("Info about SDValue: %d\n", regVal.isUndef());
-  regVal.dump();
-  printf("Node:\n");
-  regVal.getNode()->dump();
-
-  printf("First Store\n");
   SDValue Store = DAG.getStore(Chain, DL, regVal, FIN, MachinePointerInfo(SV));
-  Store.dump();
   MemOps.push_back(Store);
+  
+  printf("\n\n\n\n[1] ********* VALID? [%d] [id=%lu (physical if max 1024 I think)] [if physical? %d] [virtual? %d] **********\n\n\n\n", SavedRAX.isValid(), SavedRAX.id(), SavedRAX.isPhysical(), SavedRAX.isVirtual()); // TODO: Maybe check if register is live-in.
+  printf("[1] More reg info: %d %d\n", SavedRAX.virtRegIndex(), SavedRAX.isStack());
+  
+  printf("[2] Info about SDValue: %d\n", regVal.isUndef());
+  regVal.dump();
   
   // Store gp_offset
   FIN = DAG.getMemBasePlusOffset(FIN, TypeSize::getFixed(8), DL);
@@ -25727,8 +25743,6 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
       Chain, DL,
       DAG.getConstant(FuncInfo->getVarArgsGPOffset(), DL, MVT::i32), FIN,
       MachinePointerInfo(SV));
-  printf("Second Store\n");
-  Store.dump();
   MemOps.push_back(Store);
 
   // Store fp_offset
