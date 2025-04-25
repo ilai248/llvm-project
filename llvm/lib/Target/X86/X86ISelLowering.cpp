@@ -25731,11 +25731,11 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   SDValue Store = DAG.getStore(Chain, DL, regVal, FIN, MachinePointerInfo(SV));
   MemOps.push_back(Store);
   
-  printf("\n\n\n\n[1] ********* VALID? [%d] [id=%lu (physical if max 1024 I think)] [if physical? %d] [virtual? %d] **********\n\n\n\n", SavedRAX.isValid(), SavedRAX.id(), SavedRAX.isPhysical(), SavedRAX.isVirtual()); // TODO: Maybe check if register is live-in.
-  printf("[1] More reg info: %d %d\n", SavedRAX.virtRegIndex(), SavedRAX.isStack());
+  // printf("\n\n\n\n[1] ********* VALID? [%d] [id=%lu (physical if max 1024 I think)] [if physical? %d] [virtual? %d] **********\n\n\n\n", SavedRAX.isValid(), SavedRAX.id(), SavedRAX.isPhysical(), SavedRAX.isVirtual()); // TODO: Maybe check if register is live-in.
+  // printf("[1] More reg info: %d %d\n", SavedRAX.virtRegIndex(), SavedRAX.isStack());
   
-  printf("[2] Info about SDValue: %d\n", regVal.isUndef());
-  regVal.dump();
+  // printf("[2] Info about SDValue: %d\n", regVal.isUndef());
+  // regVal.dump();
   
   // Store gp_offset
   FIN = DAG.getMemBasePlusOffset(FIN, TypeSize::getFixed(8), DL);
