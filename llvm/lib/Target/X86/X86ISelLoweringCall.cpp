@@ -2625,15 +2625,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  SDValue res = LowerCallResult(Chain, InGlue, CallConv, isVarArg, Ins, dl, DAG, InVals, RegMask);
-  
-  // Save RAX as a virtual register in the X86FuncInfo.
-  Register MyReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
-  SDValue RegVal = DAG.getCopyFromReg(Chain, dl, MyReg, MVT::i64);
-  Register SavedRAX = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
-  Chain = DAG.getCopyToReg(Chain, dl, SavedRAX, RegVal);
-  X86Info->setSavedRAX(SavedRAX);
-  return res;
+  return LowerCallResult(Chain, InGlue, CallConv, isVarArg, Ins, dl, DAG, InVals, RegMask);
 }
 
 //===----------------------------------------------------------------------===//

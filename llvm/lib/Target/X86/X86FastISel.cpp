@@ -3503,10 +3503,6 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     
     // Set X86::RAX and save it.
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::MOV64ri), X86::RAX).addImm(256*NumBytes + NumXMMRegs);
-    
-    Register SavedRAX = MRI.createVirtualRegister(&X86::GR64RegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), SavedRAX).addReg(X86::RAX, getKillRegState(false));
-    FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->setSavedRAX(SavedRAX);
 
     // Mov regs to 0.
     static const MCPhysReg GPR64ArgRegs[] = {
