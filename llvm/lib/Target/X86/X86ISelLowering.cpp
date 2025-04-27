@@ -25741,6 +25741,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 }
 
 SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
+  printf("\n\n\n\n[-1-1] HERE\n\n\n\n");
   assert(Subtarget.is64Bit() &&
          "LowerVAARG only handles 64-bit va_arg!");
   assert(Op.getNumOperands() == 4);
@@ -35561,6 +35562,7 @@ MachineBasicBlock *
 X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
                                                MachineBasicBlock *MBB) const {
   // Emit va_arg instruction on X86-64.
+  printf("\n\n\n\n[0] HERE\n\n\n\n");
 
   // Operands to this pseudo-instruction:
   // 0  ) Output        : destination address (reg)
@@ -35627,6 +35629,7 @@ X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
   MachineBasicBlock *thisMBB = MBB;
   MachineBasicBlock *overflowMBB;
   MachineBasicBlock *offsetMBB;
+  MachineBasicBlock *trapMBB;
   MachineBasicBlock *endMBB;
 
   Register OffsetDestReg;   // Argument address computed by offsetMBB
@@ -35662,6 +35665,7 @@ X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
     const BasicBlock *LLVM_BB = MBB->getBasicBlock();
     overflowMBB = MF->CreateMachineBasicBlock(LLVM_BB);
     offsetMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+    trapMBB = MF->CreateMachineBasicBlock(LLVM_BB);
     endMBB = MF->CreateMachineBasicBlock(LLVM_BB);
 
     MachineFunction::iterator MBBIter = ++MBB->getIterator();
@@ -35669,6 +35673,7 @@ X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
     // Insert the new basic blocks
     MF->insert(MBBIter, offsetMBB);
     MF->insert(MBBIter, overflowMBB);
+    MF->insert(MBBIter, trapMBB);
     MF->insert(MBBIter, endMBB);
 
     // Transfer the remainder of MBB and its successor edges to endMBB.
@@ -35679,6 +35684,9 @@ X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
     // Make offsetMBB and overflowMBB successors of thisMBB
     thisMBB->addSuccessor(offsetMBB);
     thisMBB->addSuccessor(overflowMBB);
+    overflowMBB->addSuccessor(trapMBB);
+
+    // TODO: Maybe add "trapMBB->addSuccessor(endMBB);"
 
     // endMBB is a successor of both offsetMBB and overflowMBB
     offsetMBB->addSuccessor(endMBB);
@@ -35693,6 +35701,13 @@ X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
         .addDisp(Disp, UseFPOffset ? 4 : 0)
         .add(Segment)
         .setMemRefs(LoadOnlyMMO);
+        
+    printf("\n\n\n\n[1] HERE\n\n\n\n");
+    printf("Base: %d\n", Base.getImm());
+    printf("Scale: %d\n", Scale.getImm());
+    printf("Index: %d\n", Index.getImm());
+    printf("Disp: %d\n", Disp.getImm());
+    printf("Segment: %d\n", Segment.getImm());
 
     // Check if there is enough room left to pull this argument.
     BuildMI(thisMBB, MIMD, TII->get(X86::CMP32ri))
@@ -35812,7 +35827,22 @@ X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
       NextAddrReg)
       .addReg(OverflowDestReg)
       .addImm(ArgSizeA8);
+    
+  // // TODO: sub (NextAddrReg - OverflowAddrReg) from va_list.overflow_arg_area_size and trigger trap if negative.
+  // Register AmountChangedReg = MRI.createVirtualRegister(&X86::GR64RegClass);
+  // BuildMI(overflowMBB, MIMD, TII->get(X86::SUB64rr), AmountChangedReg)
+  //   .addReg(NextAddrReg)
+  //   .addImm(OverflowAddrReg);
+  
+  // BuildMI(overflowMBB, MIMD, TII->get(X86::CMP64ri))
+  //   .addReg(AmountChangedReg)
+  //   .addImm(0);
+  
+  // BuildMI(overflowMBB, MIMD, TII->get(X86::JCC_1))
+  //   .addMBB(trapMBB).addImm(X86::COND_B);
 
+  // ILAI
+  
   // Store the new overflow address.
   BuildMI(overflowMBB, MIMD,
           TII->get(Subtarget.isTarget64BitLP64() ? X86::MOV64mr : X86::MOV32mr))

@@ -10,6 +10,7 @@
 #include "TargetInfo.h"
 #include "clang/Basic/DiagnosticFrontend.h"
 #include "llvm/ADT/SmallBitVector.h"
+#include <iostream>
 
 using namespace clang;
 using namespace clang::CodeGen;
@@ -1068,7 +1069,6 @@ void X86_32ABIInfo::rewriteWithInAlloca(CGFunctionInfo &FI) const {
 
 RValue X86_32ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
                                 QualType Ty, AggValueSlot Slot) const {
-
   auto TypeInfo = getContext().getTypeInfoInChars(Ty);
 
   CCState State(*const_cast<CGFunctionInfo *>(CGF.CurFnInfo));
@@ -3002,7 +3002,11 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
 }
 
 static Address EmitX86_64VAArgFromMemory(CodeGenFunction &CGF,
-                                         Address VAListAddr, QualType Ty) {
+                                         Address VAListAddr, QualType Ty, llvm::BasicBlock* NoTrapBlock) {
+  std::cout << "\n\n\n\nEmitX86_64VAArgFromMemory\n\n\n\n" << std::endl;
+  Address overflow_reg_area_size_p = Address::invalid();
+  llvm::Value* overflow_reg_area_size = nullptr;
+
   Address overflow_arg_area_p =
       CGF.Builder.CreateStructGEP(VAListAddr, 3, "overflow_arg_area_p");
   llvm::Value *overflow_arg_area =
@@ -3028,18 +3032,32 @@ static Address EmitX86_64VAArgFromMemory(CodeGenFunction &CGF,
   // an 8 byte boundary.
 
   uint64_t SizeInBytes = (CGF.getContext().getTypeSize(Ty) + 7) / 8;
-  llvm::Value *Offset =
-      llvm::ConstantInt::get(CGF.Int32Ty, (SizeInBytes + 7)  & ~7);
-  overflow_arg_area = CGF.Builder.CreateGEP(CGF.Int8Ty, overflow_arg_area,
-                                            Offset, "overflow_arg_area.next");
+  llvm::Value *Offset = llvm::ConstantInt::get(CGF.Int32Ty, (SizeInBytes + 7)  & ~7);
+  overflow_arg_area = CGF.Builder.CreateGEP(CGF.Int8Ty, overflow_arg_area, Offset, "overflow_arg_area.next");
   CGF.Builder.CreateStore(overflow_arg_area, overflow_arg_area_p);
-
+  
+  // Make sure the overflow reg area size will not be negative after the change.
+  {
+    overflow_reg_area_size_p = CGF.Builder.CreateStructGEP(VAListAddr, 0, "overflow_reg_area_size_p");
+    overflow_reg_area_size = CGF.Builder.CreateLoad(overflow_reg_area_size_p, "overflow_reg_area_size");
+    CGF.Builder.CreateStore(CGF.Builder.CreateSub(overflow_reg_area_size, Offset), overflow_reg_area_size_p);
+    
+    llvm::Value* FitsInOverflow = llvm::ConstantInt::get(CGF.Int64Ty, 0);
+    FitsInOverflow = CGF.Builder.CreateICmpSGE(overflow_reg_area_size, FitsInOverflow, "fits_in_overflow");
+    CGF.Builder.CreateCondBr(FitsInOverflow, NoTrapBlock, TrapBlock);
+    
+    CGF.EmitBlock(TrapBlock);
+    __builtin_trap();
+  }
+  
+  CGF.EmitBlock(NoTrapBlock);
   // AMD64-ABI 3.5.7p5: Step 11. Return the fetched type.
   return Address(Res, LTy, Align);
 }
 
 RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
                                 QualType Ty, AggValueSlot Slot) const {
+  std::cout << "\n\n\n\n[X86-64] EmitVAArg!!\n\n\n\n" << std::endl;
   // Assume that va_list type is correct; should be pointer to LLVM type:
   // struct {
   //   i64 overflow_reg_area_size
@@ -3090,8 +3108,7 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
   if (neededSSE) {
     fp_offset_p = CGF.Builder.CreateStructGEP(VAListAddr, 2, "fp_offset_p");
     fp_offset = CGF.Builder.CreateLoad(fp_offset_p, "fp_offset");
-    llvm::Value *FitsInFP =
-      llvm::ConstantInt::get(CGF.Int32Ty, 176 - neededSSE * 16);
+    llvm::Value *FitsInFP = llvm::ConstantInt::get(CGF.Int32Ty, 176 - neededSSE * 16);
     FitsInFP = CGF.Builder.CreateICmpULE(fp_offset, FitsInFP, "fits_in_fp");
     InRegs = InRegs ? CGF.Builder.CreateAnd(InRegs, FitsInFP) : FitsInFP;
   }
@@ -3100,6 +3117,9 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
   llvm::BasicBlock *InMemBlock = CGF.createBasicBlock("vaarg.in_mem");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("vaarg.end");
   CGF.Builder.CreateCondBr(InRegs, InRegBlock, InMemBlock);
+  
+  llvm::BasicBlock *NoTrapBlock = CGF.createBasicBlock("vaarg.in_mem.no_trap");
+  llvm::BasicBlock *TrapBlock   = CGF.createBasicBlock("vaarg.in_mem.trap");
 
   // Emit code to load the value if it was passed in registers.
 
@@ -3257,13 +3277,12 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
   // Emit code to load the value if it was passed in memory.
 
   CGF.EmitBlock(InMemBlock);
-  Address MemAddr = EmitX86_64VAArgFromMemory(CGF, VAListAddr, Ty);
+  Address MemAddr = EmitX86_64VAArgFromMemory(CGF, VAListAddr, Ty, NoTrapBlock);
 
   // Return the appropriate result.
 
   CGF.EmitBlock(ContBlock);
-  Address ResAddr = emitMergePHI(CGF, RegAddr, InRegBlock, MemAddr, InMemBlock,
-                                 "vaarg.addr");
+  Address ResAddr = emitMergePHI(CGF, RegAddr, InRegBlock, MemAddr, NoTrapBlock, "vaarg.addr");
   
   return CGF.EmitLoadOfAnyValue(CGF.MakeAddrLValue(ResAddr, Ty), Slot);
 }
