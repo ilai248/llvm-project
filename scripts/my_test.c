@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <unistd.h>
 
 // Custom va_list implementation for testing (this assumes your system is patched to have the new field)
 typedef struct {
@@ -35,7 +36,10 @@ void test_variadic(const char *fmt, ...) {
         : "r" (val)              // input
         : "%eax"                 // clobbered
     );
-    
+    printf("Sleeping...\n");
+    sleep(5);
+    printf("RESULT: %d\n", result);
+
     va_list ap;
     va_start(ap, fmt);
     my_va_list* my_ap = (my_va_list*)&ap;

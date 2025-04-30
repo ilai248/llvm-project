@@ -6,7 +6,7 @@
 void test_variadic(const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         int arg = va_arg(ap, int);
         printf("Argument %d: %d\n", i, arg);
     }

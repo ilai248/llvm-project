@@ -3002,7 +3002,7 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
 }
 
 static Address EmitX86_64VAArgFromMemory(CodeGenFunction &CGF,
-                                         Address VAListAddr, QualType Ty, llvm::BasicBlock* NoTrapBlock) {
+                                         Address VAListAddr, QualType Ty, llvm::BasicBlock* NoTrapBlock /*, llvm::BasicBlock* ContBlock*/) {
   std::cout << "\n\n\n\nEmitX86_64VAArgFromMemory\n\n\n\n" << std::endl;
   Address overflow_reg_area_size_p = Address::invalid();
   llvm::Value* overflow_reg_area_size = nullptr;
@@ -3036,22 +3036,27 @@ static Address EmitX86_64VAArgFromMemory(CodeGenFunction &CGF,
   overflow_arg_area = CGF.Builder.CreateGEP(CGF.Int8Ty, overflow_arg_area, Offset, "overflow_arg_area.next");
   CGF.Builder.CreateStore(overflow_arg_area, overflow_arg_area_p);
   
+  
   // Make sure the overflow reg area size will not be negative after the change.
+  llvm::BasicBlock *TrapBlock   = CGF.createBasicBlock("vaarg.in_mem.trap");
   {
-    overflow_reg_area_size_p = CGF.Builder.CreateStructGEP(VAListAddr, 0, "overflow_reg_area_size_p");
-    overflow_reg_area_size = CGF.Builder.CreateLoad(overflow_reg_area_size_p, "overflow_reg_area_size");
-    CGF.Builder.CreateStore(CGF.Builder.CreateSub(overflow_reg_area_size, Offset), overflow_reg_area_size_p);
+    overflow_reg_area_size_p        = CGF.Builder.CreateStructGEP(VAListAddr, 0, "overflow_reg_area_size_p");
+    overflow_reg_area_size          = CGF.Builder.CreateLoad(overflow_reg_area_size_p, "overflow_reg_area_size");
+    llvm::Value *OverflowSizeOffset = llvm::ConstantInt::get(CGF.Int64Ty, ((SizeInBytes + 7)  & ~7) * 256);
+    llvm::Value *AfterSub           = CGF.Builder.CreateSub(overflow_reg_area_size, OverflowSizeOffset);
+    CGF.Builder.CreateStore(AfterSub, overflow_reg_area_size_p);
     
     llvm::Value* FitsInOverflow = llvm::ConstantInt::get(CGF.Int64Ty, 0);
-    FitsInOverflow = CGF.Builder.CreateICmpSGE(overflow_reg_area_size, FitsInOverflow, "fits_in_overflow");
+    FitsInOverflow = CGF.Builder.CreateICmpSGE(AfterSub, FitsInOverflow, "fits_in_overflow");
     CGF.Builder.CreateCondBr(FitsInOverflow, NoTrapBlock, TrapBlock);
     
     CGF.EmitBlock(TrapBlock);
-    __builtin_trap();
+    CGF.EmitTrapCall(llvm::Intrinsic::trap);
+    CGF.EmitBranch(NoTrapBlock);
   }
   
-  CGF.EmitBlock(NoTrapBlock);
   // AMD64-ABI 3.5.7p5: Step 11. Return the fetched type.
+  CGF.EmitBlock(NoTrapBlock);
   return Address(Res, LTy, Align);
 }
 
@@ -3078,10 +3083,9 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
 
   // AMD64-ABI 3.5.7p5: Step 1. Determine whether type may be passed
   // in the registers. If not go to step 7.
+  llvm::BasicBlock *NoTrapBlock = CGF.createBasicBlock("vaarg.in_mem.no_trap");
   if (!neededInt && !neededSSE)
-    return CGF.EmitLoadOfAnyValue(
-        CGF.MakeAddrLValue(EmitX86_64VAArgFromMemory(CGF, VAListAddr, Ty), Ty),
-        Slot);
+    return CGF.EmitLoadOfAnyValue(CGF.MakeAddrLValue(EmitX86_64VAArgFromMemory(CGF, VAListAddr, Ty, NoTrapBlock), Ty), Slot);
 
   // AMD64-ABI 3.5.7p5: Step 2. Compute num_gp to hold the number of
   // general purpose registers needed to pass type and num_fp to hold
@@ -3117,9 +3121,6 @@ RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
   llvm::BasicBlock *InMemBlock = CGF.createBasicBlock("vaarg.in_mem");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("vaarg.end");
   CGF.Builder.CreateCondBr(InRegs, InRegBlock, InMemBlock);
-  
-  llvm::BasicBlock *NoTrapBlock = CGF.createBasicBlock("vaarg.in_mem.no_trap");
-  llvm::BasicBlock *TrapBlock   = CGF.createBasicBlock("vaarg.in_mem.trap");
 
   // Emit code to load the value if it was passed in registers.
 
