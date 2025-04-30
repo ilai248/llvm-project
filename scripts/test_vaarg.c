@@ -8,7 +8,7 @@ void test_variadic(const char *fmt, ...) {
     va_start(ap, fmt);
     for (int i = 0; i < 20; i++) {
         int arg = va_arg(ap, int);
-        printf("Argument %d: %d\n", i, arg);
+        //printf("Argument %d: %d\n", i, arg);
     }
     va_end(ap);
 }

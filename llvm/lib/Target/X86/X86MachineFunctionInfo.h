@@ -21,6 +21,10 @@
 #include "llvm/Support/YAMLTraits.h"
 #include <set>
 
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "X86InstrInfo.h"
+
 namespace llvm {
 
 enum AMXProgModelEnum { None = 0, DirectReg = 1, ManagedRA = 2 };
@@ -105,6 +109,7 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
 
   // SavedRAX - Save the num of bytes pushed when calling the function.
   Register SavedRAX;
+  bool alreadySet = false;
   
   /// VarArgsFrameIndex - FrameIndex for start of varargs area.
   int VarArgsFrameIndex = 0;
@@ -197,8 +202,13 @@ public:
 
   void initializeBaseYamlFields(const yaml::X86MachineFunctionInfo &YamlMFI);
 
-  Register getSavedRAX() const { return SavedRAX; }
-  void setSavedRAX(Register savedRAX) { SavedRAX = savedRAX; }
+  Register getSavedRAX(MachineFunction* MF) {
+    if (!alreadySet) {
+      SavedRAX = MF->getRegInfo().createVirtualRegister(&X86::GR64RegClass);
+      alreadySet = true;
+    }
+    return SavedRAX;
+  }
 
   bool getForceFramePointer() const { return ForceFramePointer;}
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }

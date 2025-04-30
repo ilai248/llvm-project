@@ -1060,6 +1060,9 @@ namespace llvm {
   //  X86 Implementation of the TargetLowering interface
   class X86TargetLowering final : public TargetLowering {
   public:
+    // TODO: Move these functions to a different shared resource if multithreading is used.
+    static Register getSavedRAX(MachineFunction* MF);
+
     explicit X86TargetLowering(const X86TargetMachine &TM,
                                const X86Subtarget &STI);
 
