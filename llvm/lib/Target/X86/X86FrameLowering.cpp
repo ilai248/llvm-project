@@ -1620,9 +1620,16 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   // to determine the end of the prologue.
   DebugLoc DL;
   Register ArgBaseReg;
-
+  
   // Emit extra prolog for argument stack slot reference.
   if (auto *MI = X86FI->getStackPtrSaveMI()) {
+    printf("\n\n\n\n[555] Here\n\n\n\n");
+    // Save RAX in the function info.
+    Register DstReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
+    Register SavedRAX = X86FI->getSavedRAX(&MF);
+    BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::COPY), SavedRAX).addReg(DstReg, getKillRegState(true));
+    printf("\n\n\n\n[666] Here\n\n\n\n");
+
     // MI is lea instruction that created in X86ArgumentStackSlotPass.
     // Creat extra prolog for stack realignment.
     ArgBaseReg = MI->getOperand(0).getReg();

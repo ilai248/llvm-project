@@ -2623,22 +2623,20 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       }
     }
 
+  printf("\n\n\n\n[444] Here\n\n\n\n");
   // Handle result values, copying them out of physregs into vregs that we
   // return.
   SDValue res = LowerCallResult(Chain, InGlue, CallConv, isVarArg, Ins, dl, DAG, InVals, RegMask);
   
-  printf("\n\n\n\nISellLoweringCall Start\n");
-
-  // Save RAX as a virtual register in the X86FuncInfo.
-  // TODO: Maybe add something like "if (!BB->isLiveIn(BasePtr)) BB->addLiveIn(BasePtr);".
-  // if (is64Bit() && !CCInfo.isAllocated(X86::RAX)) {
-  Register RAXVReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
-  SDValue RegVal = DAG.getCopyFromReg(Chain, dl, RAXVReg, MVT::i64);
-  Register SavedRAX = X86Info->getSavedRAX(&MF);
-  Chain = DAG.getCopyToReg(Chain, dl, SavedRAX, RegVal);
-  // X86Info->setSavedRAX(SavedRAX);
-  
-  printf("ISellLoweringCall End\n\n\n\n");
+  printf("\n\n\n\n[333] Here\n\n\n\n");
+  // // Save RAX as a virtual register in the X86FuncInfo.
+  // // TODO: Maybe add something like "if (!BB->isLiveIn(BasePtr)) BB->addLiveIn(BasePtr);".
+  // // if (is64Bit() && !CCInfo.isAllocated(X86::RAX)) {
+  // Register RAXVReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
+  // SDValue RegVal = DAG.getCopyFromReg(Chain, dl, RAXVReg, MVT::i64);
+  // Register SavedRAX = X86Info->getSavedRAX(&MF);
+  // Chain = DAG.getCopyToReg(Chain, dl, SavedRAX, RegVal);
+  // // X86Info->setSavedRAX(SavedRAX);
   return res;
 }
 

@@ -3510,11 +3510,11 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     // BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), SavedRAX).addReg(X86::RAX, getKillRegState(false));
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::MOV64ri), X86::RAX).addImm(256*NumBytes + NumXMMRegs);
 
-    // The copy may not be neccessary (maybe its neccessary only when not using the variable).
-    Register DstReg = FuncInfo.MF->addLiveIn(X86::RAX, &X86::GR64RegClass);
-    Register SavedRAX = FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->getSavedRAX(FuncInfo.MF); // X86TargetLowering::getSavedRAX(FuncInfo.MF);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), SavedRAX).addReg(DstReg, getKillRegState(true));
-    // FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->setSavedRAX(SavedRAX);
+    // // The copy may not be neccessary (maybe its neccessary only when not using the variable).
+    // Register DstReg = FuncInfo.MF->addLiveIn(X86::RAX, &X86::GR64RegClass);
+    // Register SavedRAX = FuncInfo.MF(->getInfo<X86MachineFunctionInfo>()->getSavedRAX(FuncInfo.MF); // X86TargetLowering::getSavedRAX(FuncInfo.MF);
+    // BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), SavedRAX).addReg(DstReg, getKillRegState(true));
+    // // FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->setSavedRAX(SavedRAX);
 
     printf("FastISell End\n\n\n\n");
 
