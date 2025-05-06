@@ -3003,7 +3003,6 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
 static Address EmitX86_64VAArgFromMemory(CodeGenFunction &CGF,
                                          Address VAListAddr, QualType Ty, llvm::BasicBlock* NoTrapBlock /*, llvm::BasicBlock* ContBlock*/) {
-  std::cout << "\n\n\n\nEmitX86_64VAArgFromMemory\n\n\n\n" << std::endl;
   Address overflow_reg_area_size_p = Address::invalid();
   llvm::Value* overflow_reg_area_size = nullptr;
 
@@ -3036,7 +3035,7 @@ static Address EmitX86_64VAArgFromMemory(CodeGenFunction &CGF,
   overflow_arg_area = CGF.Builder.CreateGEP(CGF.Int8Ty, overflow_arg_area, Offset, "overflow_arg_area.next");
   CGF.Builder.CreateStore(overflow_arg_area, overflow_arg_area_p);
   
-  
+
   // Make sure the overflow reg area size will not be negative after the change.
   llvm::BasicBlock *TrapBlock   = CGF.createBasicBlock("vaarg.in_mem.trap");
   {
@@ -3062,7 +3061,6 @@ static Address EmitX86_64VAArgFromMemory(CodeGenFunction &CGF,
 
 RValue X86_64ABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
                                 QualType Ty, AggValueSlot Slot) const {
-  std::cout << "\n\n\n\n[X86-64] EmitVAArg!!\n\n\n\n" << std::endl;
   // Assume that va_list type is correct; should be pointer to LLVM type:
   // struct {
   //   i64 overflow_reg_area_size

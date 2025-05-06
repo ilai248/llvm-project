@@ -25672,19 +25672,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   return DAG.getMergeValues(Ops, dl);
 }
 
-// // Singleton approach. TODO: Change if multiprocessing.
-// Register SavedRAX;
-// bool alreadySet = false;
-// Register X86TargetLowering::getSavedRAX(MachineFunction* MF) {
-//   if (!alreadySet) {
-//     SavedRAX = MF->getRegInfo().createVirtualRegister(&X86::GR64RegClass);
-//     alreadySet = true;
-//   }
-//   return SavedRAX;
-// }
-
 SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
-  printf("\n\n[+] LowerVASTART\n\n");
   MachineFunction &MF = DAG.getMachineFunction();
   auto PtrVT = getPointerTy(MF.getDataLayout());
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
@@ -25701,7 +25689,6 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getStore(Chain, DL, FR, Op.getOperand(1),
                         MachinePointerInfo(SV));
   }
-  //printf("\n\n\n\nValid? %d %d %d\n\n\n\n", SavedRAX.isValid(), SavedRAX.isVirtual(), SavedRAX.isPhysical() /* The following does not work if valid: , SavedRAX.asMCReg().isValid()*/);
 
   // __va_list_tag:
   //   overflow_arg_area_size
@@ -25714,20 +25701,9 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 
   // Attempt to just use rax as live in without any virtual register stuff.
   X86MachineFunctionInfo* X86Info = MF.getInfo<X86MachineFunctionInfo>();
-  // Register RAXVReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
-  // SDValue RegVal2 = DAG.getCopyFromReg(Chain, DL, RAXVReg, MVT::i64);
-  // Register SavedRAX2 = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
-  // Chain = DAG.getCopyToReg(Chain, DL, SavedRAX2, RegVal2);
-  // X86Info->setSavedRAX(SavedRAX2);
-
-  SDValue Store;
   Register SavedRAX = X86Info->getSavedRAX();
-  // assert(alreadySet);
-  // if (alreadySet) {
-    
-  // }
   const SDValue& regVal = DAG.getCopyFromReg(Chain, DL, SavedRAX, MVT::i64);
-  Store         = DAG.getStore(Chain, DL, regVal, FIN, MachinePointerInfo(SV));
+  SDValue Store         = DAG.getStore(Chain, DL, regVal, FIN, MachinePointerInfo(SV));
   MemOps.push_back(Store);
   
   // Store gp_offset
@@ -35706,9 +35682,7 @@ X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
     thisMBB->addSuccessor(offsetMBB);
     thisMBB->addSuccessor(overflowMBB);
     overflowMBB->addSuccessor(trapMBB);
-
-    // TODO: Maybe add "trapMBB->addSuccessor(endMBB);"
-
+    
     // endMBB is a successor of both offsetMBB and overflowMBB
     offsetMBB->addSuccessor(endMBB);
     overflowMBB->addSuccessor(endMBB);
@@ -35841,21 +35815,6 @@ X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
       NextAddrReg)
       .addReg(OverflowDestReg)
       .addImm(ArgSizeA8);
-    
-  // // TODO: sub (NextAddrReg - OverflowAddrReg) from va_list.overflow_arg_area_size and trigger trap if negative.
-  // Register AmountChangedReg = MRI.createVirtualRegister(&X86::GR64RegClass);
-  // BuildMI(overflowMBB, MIMD, TII->get(X86::SUB64rr), AmountChangedReg)
-  //   .addReg(NextAddrReg)
-  //   .addImm(OverflowAddrReg);
-  
-  // BuildMI(overflowMBB, MIMD, TII->get(X86::CMP64ri))
-  //   .addReg(AmountChangedReg)
-  //   .addImm(0);
-  
-  // BuildMI(overflowMBB, MIMD, TII->get(X86::JCC_1))
-  //   .addMBB(trapMBB).addImm(X86::COND_B);
-
-  // ILAI
   
   // Store the new overflow address.
   BuildMI(overflowMBB, MIMD,

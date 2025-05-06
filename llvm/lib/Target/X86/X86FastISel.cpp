@@ -3209,7 +3209,6 @@ static unsigned computeBytesPoppedByCalleeForSRet(const X86Subtarget *Subtarget,
 }
 
 bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
-  printf("\n\n[+] fastLowerCall\n\n");
   auto &OutVals       = CLI.OutVals;
   auto &OutFlags      = CLI.OutFlags;
   auto &OutRegs       = CLI.OutRegs;
@@ -3501,18 +3500,7 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs);
     assert((Subtarget->hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
-
-    // Set X86::RAX and save it.
-    // Register DstReg = FuncInfo.MF->addLiveIn(SrcReg, RC);
-    // Register SavedRAX = MRI.createVirtualRegister(&X86::GR64RegClass);
-    // BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), SavedRAX).addReg(X86::RAX, getKillRegState(false));
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(X86::MOV64ri), X86::RAX).addImm(256*NumBytes + NumXMMRegs);
-
-    // // The copy may not be neccessary (maybe its neccessary only when not using the variable).
-    // Register DstReg = FuncInfo.MF->addLiveIn(X86::RAX, &X86::GR64RegClass);
-    // Register SavedRAX = FuncInfo.MF(->getInfo<X86MachineFunctionInfo>()->getSavedRAX(FuncInfo.MF); // X86TargetLowering::getSavedRAX(FuncInfo.MF);
-    // BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), SavedRAX).addReg(DstReg, getKillRegState(true));
-    // // FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->setSavedRAX(SavedRAX);
 
     // Mov regs to 0.
     static const MCPhysReg GPR64ArgRegs[] = {
@@ -3794,7 +3782,6 @@ Register X86FastISel::X86MaterializeInt(const ConstantInt *CI, MVT VT) {
   }
   }
   return fastEmitInst_i(Opc, TLI.getRegClassFor(VT), Imm);
-  printf("\n\n\n\nBP 3\n\n\n\n");
 }
 
 Register X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {

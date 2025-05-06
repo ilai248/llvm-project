@@ -3009,10 +3009,6 @@ namespace {
 void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
                                          llvm::Function *Fn,
                                          const FunctionArgList &Args) {
-  printf("\n\n[+] EmitFunctionProlog\n\n");
-  //llvm::Value* Magic = llvm::ConstantInt::get(this->Int64Ty, 0x11a111a1);
-  //this->EmitVAStartEnd(Magic, true);
-  
   if (CurCodeDecl && CurCodeDecl->hasAttr<NakedAttr>())
     // Naked functions don't have prologues.
     return;

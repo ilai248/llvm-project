@@ -15,9 +15,7 @@ using namespace llvm;
 
 yaml::X86MachineFunctionInfo::X86MachineFunctionInfo(
     const llvm::X86MachineFunctionInfo &MFI)
-    : AMXProgModel(MFI.getAMXProgModel()) {
-      printf("\n\n[+] X86MachineFunctionInfo\n\n");
-    }
+    : AMXProgModel(MFI.getAMXProgModel()) { }
 
 void yaml::X86MachineFunctionInfo::mappingImpl(yaml::IO &YamlIO) {
   MappingTraits<X86MachineFunctionInfo>::mapping(YamlIO, *this);

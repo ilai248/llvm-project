@@ -109,7 +109,6 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
 
   // SavedRAX - Save the num of bytes pushed when calling the function.
   Register SavedRAX;
-  bool alreadySet = false;
   
   /// VarArgsFrameIndex - FrameIndex for start of varargs area.
   int VarArgsFrameIndex = 0;
@@ -202,7 +201,7 @@ public:
 
   void initializeBaseYamlFields(const yaml::X86MachineFunctionInfo &YamlMFI);
 
-  Register setSavedRAX(Register savedRAX) {
+  void setSavedRAX(Register savedRAX) {
     this->SavedRAX = savedRAX;
   }
 
