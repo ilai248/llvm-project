@@ -202,11 +202,11 @@ public:
 
   void initializeBaseYamlFields(const yaml::X86MachineFunctionInfo &YamlMFI);
 
-  Register getSavedRAX(MachineFunction* MF) {
-    if (!alreadySet) {
-      SavedRAX = MF->getRegInfo().createVirtualRegister(&X86::GR64RegClass);
-      alreadySet = true;
-    }
+  Register setSavedRAX(Register savedRAX) {
+    this->SavedRAX = savedRAX;
+  }
+
+  Register getSavedRAX() {
     return SavedRAX;
   }
 

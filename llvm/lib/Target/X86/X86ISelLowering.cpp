@@ -25684,6 +25684,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 // }
 
 SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
+  printf("\n\n[+] LowerVASTART\n\n");
   MachineFunction &MF = DAG.getMachineFunction();
   auto PtrVT = getPointerTy(MF.getDataLayout());
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
@@ -25713,7 +25714,6 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 
   // Attempt to just use rax as live in without any virtual register stuff.
   X86MachineFunctionInfo* X86Info = MF.getInfo<X86MachineFunctionInfo>();
-  printf("\n\n\n\nISellLowering Start\n");
   // Register RAXVReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
   // SDValue RegVal2 = DAG.getCopyFromReg(Chain, DL, RAXVReg, MVT::i64);
   // Register SavedRAX2 = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
@@ -25721,7 +25721,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   // X86Info->setSavedRAX(SavedRAX2);
 
   SDValue Store;
-  Register SavedRAX = X86Info->getSavedRAX(&MF);
+  Register SavedRAX = X86Info->getSavedRAX();
   // assert(alreadySet);
   // if (alreadySet) {
     
@@ -25729,7 +25729,6 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   const SDValue& regVal = DAG.getCopyFromReg(Chain, DL, SavedRAX, MVT::i64);
   Store         = DAG.getStore(Chain, DL, regVal, FIN, MachinePointerInfo(SV));
   MemOps.push_back(Store);
-  printf("ISellLowering End\n\n\n\n");
   
   // Store gp_offset
   FIN = DAG.getMemBasePlusOffset(FIN, TypeSize::getFixed(8), DL);
@@ -25762,12 +25761,10 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
       Chain, DL, RSFIN, FIN,
       MachinePointerInfo(SV, Subtarget.isTarget64BitLP64() ? 16 : 12));
   MemOps.push_back(Store);
-  printf("\nREACHED FUNCT END\n\n");
   return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps);
 }
 
 SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
-  printf("\n\n\n\n[-1-1] HERE\n\n\n\n");
   assert(Subtarget.is64Bit() &&
          "LowerVAARG only handles 64-bit va_arg!");
   assert(Op.getNumOperands() == 4);
@@ -35588,8 +35585,6 @@ MachineBasicBlock *
 X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
                                                MachineBasicBlock *MBB) const {
   // Emit va_arg instruction on X86-64.
-  printf("\n\n\n\n[0] HERE\n\n\n\n");
-
   // Operands to this pseudo-instruction:
   // 0  ) Output        : destination address (reg)
   // 1-5) Input         : va_list address (addr, i64mem)
@@ -35727,13 +35722,6 @@ X86TargetLowering::EmitVAARGWithCustomInserter(MachineInstr &MI,
         .addDisp(Disp, UseFPOffset ? 4 : 0)
         .add(Segment)
         .setMemRefs(LoadOnlyMMO);
-        
-    printf("\n\n\n\n[1] HERE\n\n\n\n");
-    printf("Base: %d\n", Base.getImm());
-    printf("Scale: %d\n", Scale.getImm());
-    printf("Index: %d\n", Index.getImm());
-    printf("Disp: %d\n", Disp.getImm());
-    printf("Segment: %d\n", Segment.getImm());
 
     // Check if there is enough room left to pull this argument.
     BuildMI(thisMBB, MIMD, TII->get(X86::CMP32ri))

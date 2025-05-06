@@ -639,6 +639,7 @@ void X86FrameLowering::emitStackProbe(
     MachineFunction &MF, MachineBasicBlock &MBB,
     MachineBasicBlock::iterator MBBI, const DebugLoc &DL, bool InProlog,
     std::optional<MachineFunction::DebugInstrOperandPair> InstrNum) const {
+  printf("\n\n[+] emitStackProbe\n\n");
   const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
   if (STI.isTargetWindowsCoreCLR()) {
     if (InProlog) {
@@ -1588,6 +1589,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
   assert(&STI == &MF.getSubtarget<X86Subtarget>() &&
          "MF used frame lowering for wrong subtarget");
+  printf("\n\n[+] emitPrologue\n\n");
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const Function &Fn = MF.getFunction();
@@ -1623,12 +1625,12 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   
   // Emit extra prolog for argument stack slot reference.
   if (auto *MI = X86FI->getStackPtrSaveMI()) {
-    printf("\n\n\n\n[555] Here\n\n\n\n");
-    // Save RAX in the function info.
-    Register DstReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
-    Register SavedRAX = X86FI->getSavedRAX(&MF);
-    BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::COPY), SavedRAX).addReg(DstReg, getKillRegState(true));
-    printf("\n\n\n\n[666] Here\n\n\n\n");
+    // printf("\n\n\n\n[555] Here\n\n\n\n");
+    // // Save RAX in the function info.
+    // Register DstReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
+    // Register SavedRAX = X86FI->getSavedRAX(&MF);
+    // BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::COPY), SavedRAX).addReg(DstReg, getKillRegState(true));
+    // printf("\n\n\n\n[666] Here\n\n\n\n");
 
     // MI is lea instruction that created in X86ArgumentStackSlotPass.
     // Creat extra prolog for stack realignment.
@@ -3108,7 +3110,7 @@ void X86FrameLowering::emitCatchRetReturnValue(MachineBasicBlock &MBB,
          "SEH should not use CATCHRET");
   const DebugLoc &DL = CatchRet->getDebugLoc();
   MachineBasicBlock *CatchRetTarget = CatchRet->getOperand(0).getMBB();
-
+  
   // Fill EAX/RAX with the address of the target block.
   if (STI.is64Bit()) {
     // LEA64r CatchRetTarget(%rip), %rax
@@ -3202,8 +3204,8 @@ bool X86FrameLowering::restoreCalleeSavedRegisters(
 void X86FrameLowering::determineCalleeSaves(MachineFunction &MF,
                                             BitVector &SavedRegs,
                                             RegScavenger *RS) const {
+  printf("\n\n[+] determineCalleeSaves\n\n");
   TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
-
   // Spill the BasePtr if it's used.
   if (TRI->hasBasePointer(MF)) {
     Register BasePtr = TRI->getBaseRegister();

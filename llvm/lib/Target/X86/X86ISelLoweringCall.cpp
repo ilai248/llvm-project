@@ -1554,6 +1554,13 @@ void VarArgsLoweringHelper::createVarArgAreaAndStoreRegisters(
       if (NumIntRegs < 4)
         FuncInfo->setVarArgsFrameIndex(FuncInfo->getRegSaveFrameIndex());
     } else {
+      MachineFunction& MF = DAG.getMachineFunction();
+      Register SavedRAX = MF.getRegInfo().createVirtualRegister(&X86::GR64RegClass);
+      Register RAXVReg = MF.addLiveIn(X86::RAX, &X86::GR64RegClass);
+      SDValue RegVal = DAG.getCopyFromReg(Chain, DL, RAXVReg, MVT::i64);
+      Chain = DAG.getCopyToReg(Chain, DL, SavedRAX, RegVal);
+      FuncInfo->setSavedRAX(SavedRAX);
+
       // For X86-64, if there are vararg parameters that are passed via
       // registers, then we must store them to their spots on the stack so
       // they may be loaded by dereferencing the result of va_next.
@@ -2011,7 +2018,7 @@ SDValue X86TargetLowering::getMOVL(SelectionDAG &DAG, const SDLoc &dl, MVT VT,
 SDValue
 X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                              SmallVectorImpl<SDValue> &InVals) const {
-  printf("\n\n[111] HERE\n\n");
+  printf("\n\n[+] LowerCall\n\n");
   SelectionDAG &DAG                     = CLI.DAG;
   SDLoc &dl                             = CLI.DL;
   SmallVectorImpl<ISD::OutputArg> &Outs = CLI.Outs;
@@ -2623,12 +2630,10 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       }
     }
 
-  printf("\n\n\n\n[444] Here\n\n\n\n");
   // Handle result values, copying them out of physregs into vregs that we
   // return.
   SDValue res = LowerCallResult(Chain, InGlue, CallConv, isVarArg, Ins, dl, DAG, InVals, RegMask);
   
-  printf("\n\n\n\n[333] Here\n\n\n\n");
   // // Save RAX as a virtual register in the X86FuncInfo.
   // // TODO: Maybe add something like "if (!BB->isLiveIn(BasePtr)) BB->addLiveIn(BasePtr);".
   // // if (is64Bit() && !CCInfo.isAllocated(X86::RAX)) {

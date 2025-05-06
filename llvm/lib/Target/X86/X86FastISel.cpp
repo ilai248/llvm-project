@@ -3209,7 +3209,7 @@ static unsigned computeBytesPoppedByCalleeForSRet(const X86Subtarget *Subtarget,
 }
 
 bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
-  printf("\n\n[000] HERE\n\n");
+  printf("\n\n[+] fastLowerCall\n\n");
   auto &OutVals       = CLI.OutVals;
   auto &OutFlags      = CLI.OutFlags;
   auto &OutRegs       = CLI.OutRegs;
@@ -3502,8 +3502,6 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     assert((Subtarget->hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
 
-    printf("\n\n\n\nFastISell Start\n");
-    
     // Set X86::RAX and save it.
     // Register DstReg = FuncInfo.MF->addLiveIn(SrcReg, RC);
     // Register SavedRAX = MRI.createVirtualRegister(&X86::GR64RegClass);
@@ -3515,8 +3513,6 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     // Register SavedRAX = FuncInfo.MF(->getInfo<X86MachineFunctionInfo>()->getSavedRAX(FuncInfo.MF); // X86TargetLowering::getSavedRAX(FuncInfo.MF);
     // BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, MIMD, TII.get(TargetOpcode::COPY), SavedRAX).addReg(DstReg, getKillRegState(true));
     // // FuncInfo.MF->getInfo<X86MachineFunctionInfo>()->setSavedRAX(SavedRAX);
-
-    printf("FastISell End\n\n\n\n");
 
     // Mov regs to 0.
     static const MCPhysReg GPR64ArgRegs[] = {
